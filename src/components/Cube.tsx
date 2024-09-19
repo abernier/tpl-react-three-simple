@@ -1,16 +1,12 @@
-import { RigidBody } from "@react-three/rapier";
 import { type ComponentProps } from "react";
 
-type CubeProps = ComponentProps<typeof RigidBody> & { color?: string };
-
-function Cube({ color = "blue", ...props }: CubeProps) {
+function Cube({ children, ...props }: ComponentProps<"mesh">) {
   return (
-    <RigidBody {...props}>
-      <mesh castShadow>
-        <boxGeometry args={[2, 2, 2]} />
-        <meshStandardMaterial color={color} />
-      </mesh>
-    </RigidBody>
+    <mesh castShadow {...props}>
+      <boxGeometry args={[2, 2, 2]} />
+      <meshStandardMaterial color="blue" />
+      {children}
+    </mesh>
   );
 }
 

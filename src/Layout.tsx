@@ -1,12 +1,14 @@
 import * as THREE from "three";
-import { type ElementRef, type ReactNode, useEffect, useRef } from "react";
-import { useXR } from "@react-three/xr";
-import { Environment, PerspectiveCamera } from "@react-three/drei";
+import { ElementRef, useRef, type ReactNode } from "react";
+import {
+  CameraControls,
+  Environment,
+  Helper,
+  PerspectiveCamera,
+  useHelper,
+} from "@react-three/drei";
 
 import { useControls, folder } from "leva";
-
-import Gamepads from "./Gamepads";
-import { useFrame } from "@react-three/fiber";
 
 function Layout({
   children,
@@ -21,17 +23,22 @@ function Layout({
         bg,
         grid: true,
         axes: true,
+        ambientIntensity: 1,
+        spotLightIntensity: 50,
+        spotLightHelper: false,
       },
       { collapsed: true }
     ),
   }));
   // console.log("gui=", gui);
 
+  const spotLightRef = useRef<ElementRef<"spotLight">>(null!);
+  useHelper(gui.spotLightHelper && spotLightRef, THREE.SpotLightHelper);
+
   return (
     <>
       <Camera />
-
-      <Gamepads />
+      <CameraControls />
 
       <Environment background>
         <mesh scale={100}>
@@ -41,14 +48,13 @@ function Layout({
       </Environment>
 
       <spotLight
-        position={[15, 15, 15]}
-        // angle={0.3}
-        penumbra={1}
+        ref={spotLightRef}
+        position={[7, 7, 7]}
         castShadow
-        intensity={2}
+        intensity={gui.spotLightIntensity}
         shadow-bias={-0.0001}
       />
-      <ambientLight intensity={1} />
+      <ambientLight intensity={gui.ambientIntensity} />
 
       {gui.grid && <gridHelper args={[30, 30, 30]} position-y=".01" />}
       {gui.axes && <axesHelper args={[5]} />}
@@ -63,35 +69,22 @@ function Camera() {
     Camera: folder(
       {
         fov: 50,
-        position: { value: [7, 4.0, 21.0], step: 0.1 }, // ~= position of the camera (the player holds the camera)
-        lookAt: {
-          value: [0, 0, 0],
-          step: 0.1,
-        },
+        position: { value: [0, 2.0, 21.0], step: 0.1 },
+        // lookAt: {
+        //   value: [0, 0, 0],
+        //   step: 0.1,
+        // },
       },
       { collapsed: true }
     ),
   }));
 
-  const cameraRef = useRef<ElementRef<typeof PerspectiveCamera>>(null); // non-XR camera
-
-  const player = useXR((state) => state.player);
-
-  //
-  //  🤳 Camera (player position + cam lookAt rotation)
-  //
-
-  useEffect(() => {
-    player.position.set(...gui.position);
-  }, [player, gui.position]);
-
-  // useFrame(() => {
-  //   cameraRef.current?.lookAt(...gui.lookAt);
-  // });
-
   return (
     <>
-      <PerspectiveCamera ref={cameraRef} fov={gui.fov} makeDefault />
+      <PerspectiveCamera
+        {...{ fov: gui.fov, position: gui.position }}
+        makeDefault
+      />
     </>
   );
 }
